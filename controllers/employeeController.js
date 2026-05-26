@@ -1,5 +1,4 @@
 const Employee = require("../models/Employee");
-
 function calculateSalary(data) {
   const basicSalary = Number(data.basicSalary) || 0;
   const hra = Number(data.hra) || 0;

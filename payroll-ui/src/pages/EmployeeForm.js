@@ -37,7 +37,7 @@ function EmployeeForm() {
 
   const fetchEmployees = async () => {
     try {
-      const res = await axios.get("http://localhost:3003/api/employees", {
+      const res = await axios.get("https://rk-payroll.onrender.com/api/employees", {
         headers,
       });
 
@@ -68,13 +68,13 @@ function EmployeeForm() {
 
     try {
       if (editId) {
-        await axios.put(`http://localhost:3003/api/employees/${editId}`, form, {
+        await axios.put(`https://rk-payroll.onrender.com/api/employees/${editId}`, form, {
           headers,
         });
 
         alert("Employee Updated Successfully");
       } else {
-        await axios.post("http://localhost:3003/api/employees", form, {
+        await axios.post("https://rk-payroll.onrender.com/api/employees", form, {
           headers,
         });
 
@@ -116,7 +116,7 @@ function EmployeeForm() {
     if (!window.confirm("Delete this employee?")) return;
 
     try {
-      await axios.delete(`http://localhost:3003/api/employees/${id}`, {
+      await axios.delete(`https://rk-payroll.onrender.com/api/employees/${id}`, {
         headers,
       });
 
@@ -258,7 +258,7 @@ function EmployeeForm() {
           }
 
           try {
-            await axios.post("http://localhost:3003/api/employees", employeeData, {
+            await axios.post("https://rk-payroll.onrender.com/api/employees", employeeData, {
               headers,
             });
 

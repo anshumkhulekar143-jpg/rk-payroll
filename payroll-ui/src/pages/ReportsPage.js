@@ -16,19 +16,19 @@ function ReportsPage() {
 
   const fetchReportsData = async () => {
     try {
-      const empRes = await axios.get("http://localhost:3003/api/employees", {
+      const empRes = await axios.get("https://rk-payroll.onrender.com/api/employees", {
         headers,
       });
 
-      const attRes = await axios.get("http://localhost:3003/api/attendance", {
+      const attRes = await axios.get("https://rk-payroll.onrender.com/api/attendance", {
         headers,
       });
 
-      const leaveRes = await axios.get("http://localhost:3003/api/leaves", {
+      const leaveRes = await axios.get("https://rk-payroll.onrender.com/api/leaves", {
         headers,
       });
 
-      const payrollRes = await axios.get("http://localhost:3003/api/payroll", {
+      const payrollRes = await axios.get("https://rk-payroll.onrender.com/api/payroll", {
         headers,
       });
 

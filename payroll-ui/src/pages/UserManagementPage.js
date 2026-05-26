@@ -21,7 +21,7 @@ function UserManagementPage() {
 
   const fetchUsers = async () => {
     try {
-      const res = await axios.get("http://localhost:3003/api/users", {
+      const res = await axios.get("https://rk-payroll.onrender.com/api/users", {
         headers,
       });
 
@@ -33,7 +33,7 @@ function UserManagementPage() {
 
   const fetchEmployees = async () => {
     try {
-      const res = await axios.get("http://localhost:3003/api/employees", {
+      const res = await axios.get("https://rk-payroll.onrender.com/api/employees", {
         headers,
       });
 
@@ -59,7 +59,7 @@ function UserManagementPage() {
     e.preventDefault();
 
     try {
-      await axios.post("http://localhost:3003/api/users", form, {
+      await axios.post("https://rk-payroll.onrender.com/api/users", form, {
         headers,
       });
 
@@ -82,7 +82,7 @@ function UserManagementPage() {
   const updateUserStatus = async (id, status) => {
     try {
       await axios.put(
-        `http://localhost:3003/api/users/${id}/status`,
+        `https://rk-payroll.onrender.com/api/users/${id}/status`,
         { status },
         { headers }
       );
@@ -97,7 +97,7 @@ function UserManagementPage() {
     if (!window.confirm("Delete this user?")) return;
 
     try {
-      await axios.delete(`http://localhost:3003/api/users/${id}`, {
+      await axios.delete(`https://rk-payroll.onrender.com/api/users/${id}`, {
         headers,
       });
 

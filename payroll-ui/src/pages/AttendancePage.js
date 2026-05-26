@@ -20,14 +20,14 @@ function AttendancePage() {
   };
 
   const fetchEmployees = async () => {
-    const res = await axios.get("http://localhost:3003/api/employees", {
+    const res = await axios.get("https://rk-payroll.onrender.com/api/employees", {
       headers,
     });
     setEmployees(res.data);
   };
 
   const fetchAttendance = async () => {
-    const res = await axios.get("http://localhost:3003/api/attendance", {
+    const res = await axios.get("https://rk-payroll.onrender.com/api/attendance", {
       headers,
     });
     setAttendance(res.data);
@@ -51,7 +51,7 @@ function AttendancePage() {
     e.preventDefault();
 
     try {
-      await axios.post("http://localhost:3003/api/attendance", form, {
+      await axios.post("https://rk-payroll.onrender.com/api/attendance", form, {
         headers,
       });
 
@@ -74,7 +74,7 @@ function AttendancePage() {
   const deleteAttendance = async (id) => {
     if (!window.confirm("Delete attendance?")) return;
 
-    await axios.delete(`http://localhost:3003/api/attendance/${id}`, {
+    await axios.delete(`https://rk-payroll.onrender.com/api/attendance/${id}`, {
       headers,
     });
 

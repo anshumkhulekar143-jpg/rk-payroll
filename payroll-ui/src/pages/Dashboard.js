@@ -26,14 +26,14 @@ function Dashboard() {
   const fetchDashboardData = async () => {
     try {
       const empRes = await axios.get(
-        "http://localhost:3003/api/employees",
+        "https://rk-payroll.onrender.com/api/employees",
         { headers }
       );
 
       setEmployees(empRes.data);
 
       const compRes = await axios.get(
-        "http://localhost:3003/api/company"
+        "https://rk-payroll.onrender.com/api/company"
       );
 
       setCompanies(compRes.data);

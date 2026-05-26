@@ -38,7 +38,7 @@ useEffect(() => {
     const token = localStorage.getItem("token");
 
     const res = await axios.get(
-      `http://localhost:3003/api/employee/company/${companyId}`,
+      `https://rk-payroll.onrender.com/api/employee/company/${companyId}`,
       {
         headers: {
           Authorization: `Bearer ${token}`,
@@ -92,7 +92,7 @@ useEffect(() => {
 
     try {
       const res = await axios.delete(
-        `http://localhost:3003/api/employee/${employeeId}`,
+        `https://rk-payroll.onrender.com/api/employee/${employeeId}`,
         {
           headers: authHeader(),
         }
@@ -112,7 +112,7 @@ useEffect(() => {
   const downloadSalarySlip = async (employeeId) => {
     try {
       const response = await axios.get(
-        `http://localhost:3003/api/salary-slip/${employeeId}/download`,
+        `https://rk-payroll.onrender.com/api/salary-slip/${employeeId}/download`,
         {
           headers: authHeader(),
           responseType: "blob",

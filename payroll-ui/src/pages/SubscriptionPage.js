@@ -6,7 +6,7 @@ function SubscriptionPage() {
 
   const fetchCompanies = async () => {
     try {
-      const res = await axios.get("http://localhost:3003/api/company");
+      const res = await axios.get("https://rk-payroll.onrender.com/api/company");
       setCompanies(res.data);
     } catch (err) {
       console.log("FETCH COMPANIES ERROR:", err);
@@ -20,7 +20,7 @@ function SubscriptionPage() {
   const updateSubscription = async (id, plan, months) => {
     try {
       await axios.put(
-        `http://localhost:3003/api/company/${id}/subscription`,
+        `https://rk-payroll.onrender.com/api/company/${id}/subscription`,
         {
           subscriptionPlan: plan,
           months,
@@ -38,7 +38,7 @@ function SubscriptionPage() {
   const deactivateCompany = async (id) => {
     try {
       await axios.put(
-        `http://localhost:3003/api/company/${id}/subscription`,
+        `https://rk-payroll.onrender.com/api/company/${id}/subscription`,
         {
           subscriptionPlan: "monthly",
           months: 0,

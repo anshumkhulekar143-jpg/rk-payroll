@@ -31,7 +31,7 @@ function EmployeeForm() {
   const fetchEmployees = async () => {
     try {
       const res = await axios.get(
-        "http://localhost:3003/api/employees",
+        "https://rk-payroll.onrender.com/api/employees",
         { headers }
       );
 
@@ -57,7 +57,7 @@ function EmployeeForm() {
 
     try {
       await axios.post(
-        "http://localhost:3003/api/employees",
+        "https://rk-payroll.onrender.com/api/employees",
         form,
         { headers }
       );
@@ -94,7 +94,7 @@ function EmployeeForm() {
   const deleteEmployee = async (id) => {
     try {
       await axios.delete(
-        `http://localhost:3003/api/employees/${id}`,
+        `https://rk-payroll.onrender.com/api/employees/${id}`,
         { headers }
       );
 

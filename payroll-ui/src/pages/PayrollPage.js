@@ -13,7 +13,7 @@ function PayrollPage() {
 
   const fetchPayrolls = async () => {
     try {
-      const res = await axios.get("http://localhost:3003/api/payroll", {
+      const res = await axios.get("https://rk-payroll.onrender.com/api/payroll", {
         headers,
         params: month ? { month } : {},
       });
@@ -36,7 +36,7 @@ function PayrollPage() {
 
     try {
       await axios.post(
-        "http://localhost:3003/api/payroll/generate",
+        "https://rk-payroll.onrender.com/api/payroll/generate",
         { month },
         { headers }
       );
@@ -52,7 +52,7 @@ function PayrollPage() {
     if (!window.confirm("Delete this payroll record?")) return;
 
     try {
-      await axios.delete(`http://localhost:3003/api/payroll/${id}`, {
+      await axios.delete(`https://rk-payroll.onrender.com/api/payroll/${id}`, {
         headers,
       });
 

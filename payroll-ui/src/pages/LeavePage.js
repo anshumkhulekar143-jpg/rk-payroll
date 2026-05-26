@@ -21,7 +21,7 @@ function LeavePage() {
 
   const fetchEmployees = async () => {
     try {
-      const res = await axios.get("http://localhost:3003/api/employees", {
+      const res = await axios.get("https://rk-payroll.onrender.com/api/employees", {
         headers,
       });
 
@@ -33,7 +33,7 @@ function LeavePage() {
 
   const fetchLeaves = async () => {
     try {
-      const res = await axios.get("http://localhost:3003/api/leaves", {
+      const res = await axios.get("https://rk-payroll.onrender.com/api/leaves", {
         headers,
       });
 
@@ -59,7 +59,7 @@ function LeavePage() {
     e.preventDefault();
 
     try {
-      await axios.post("http://localhost:3003/api/leaves", form, {
+      await axios.post("https://rk-payroll.onrender.com/api/leaves", form, {
         headers,
       });
 
@@ -82,7 +82,7 @@ function LeavePage() {
   const updateStatus = async (id, status) => {
     try {
       await axios.put(
-        `http://localhost:3003/api/leaves/${id}/status`,
+        `https://rk-payroll.onrender.com/api/leaves/${id}/status`,
         { status },
         { headers }
       );
@@ -97,7 +97,7 @@ function LeavePage() {
     if (!window.confirm("Delete this leave record?")) return;
 
     try {
-      await axios.delete(`http://localhost:3003/api/leaves/${id}`, {
+      await axios.delete(`https://rk-payroll.onrender.com/api/leaves/${id}`, {
         headers,
       });
 

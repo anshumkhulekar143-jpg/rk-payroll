@@ -23,15 +23,15 @@ function EmployeePortal() {
 
   const fetchData = async () => {
     try {
-      const attRes = await axios.get("http://localhost:3003/api/attendance", {
+      const attRes = await axios.get("https://rk-payroll.onrender.com/api/attendance", {
         headers,
       });
 
-      const leaveRes = await axios.get("http://localhost:3003/api/leaves", {
+      const leaveRes = await axios.get("https://rk-payroll.onrender.com/api/leaves", {
         headers,
       });
 
-      const payRes = await axios.get("http://localhost:3003/api/payroll", {
+      const payRes = await axios.get("https://rk-payroll.onrender.com/api/payroll", {
         headers,
       });
 
@@ -73,7 +73,7 @@ function EmployeePortal() {
 
     try {
       await axios.post(
-        "http://localhost:3003/api/leaves",
+        "https://rk-payroll.onrender.com/api/leaves",
         {
           ...form,
           employeeId: user.employeeId,
