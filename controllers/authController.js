@@ -30,62 +30,20 @@ exports.login = async (req, res) => {
         });
       }
 
-      const isCompanyPasswordMatch = await bcrypt.compare(password, company.password);
-
-      if (!isCompanyPasswordMatch) {
-        return res.status(400).json({
-          message: "Invalid email or password",
-        });
-      }
-
-      if (company.status !== "active") {
-        return res.status(403).json({
-          message: "Company subscription inactive",
-        });
-      }
-
-      if (
-        company.subscriptionEndDate &&
-        new Date(company.subscriptionEndDate) < new Date()
-      ) {
-        company.status = "inactive";
-        await company.save();
-
-        return res.status(403).json({
-          message: "Subscription expired",
-        });
-      }
-
-      const token = jwt.sign(
-        {
-          id: company._id,
-          companyId: company._id,
-          role: "companyadmin",
-        },
-        "secretkey",
-        { expiresIn: "7d" }
-      );
-
-      return res.status(200).json({
-        message: "Company login successful",
-        token,
-        user: {
-          id: company._id,
-          companyId: company._id,
-          name: company.companyName,
-          email: company.email,
-          role: "companyadmin",
-        },
-      });
+      user = company;
+      loginType = "company";
     }
 
-    if (user.status !== "active") {
-      return res.status(403).json({
-        message: "User account inactive",
-      });
-    }
+    let isMatch = false;
 
-    const isMatch = await bcrypt.compare(password, user.password);
+    if (
+      user.password.startsWith("$2a$") ||
+      user.password.startsWith("$2b$")
+    ) {
+      isMatch = await bcrypt.compare(password, user.password);
+    } else {
+      isMatch = password === user.password;
+    }
 
     if (!isMatch) {
       return res.status(400).json({
@@ -96,12 +54,14 @@ exports.login = async (req, res) => {
     const token = jwt.sign(
       {
         id: user._id,
-        companyId: user.companyId,
-        employeeId: user.employeeId,
-        role: user.role,
+        role: user.role || "companyadmin",
+        companyId: user.companyId || user._id,
+        loginType,
       },
-      "secretkey",
-      { expiresIn: "7d" }
+      process.env.JWT_SECRET,
+      {
+        expiresIn: "7d",
+      }
     );
 
     res.status(200).json({
@@ -109,17 +69,18 @@ exports.login = async (req, res) => {
       token,
       user: {
         id: user._id,
-        companyId: user.companyId,
-        employeeId: user.employeeId,
-        name: user.name,
+        name: user.name || user.companyName,
         email: user.email,
-        role: user.role,
+        role: user.role || "companyadmin",
+        companyId: user.companyId || user._id,
+        loginType,
       },
     });
   } catch (err) {
     console.log("LOGIN ERROR:", err);
+
     res.status(500).json({
-      message: "Server Error",
+      message: "Server error",
     });
   }
 };
