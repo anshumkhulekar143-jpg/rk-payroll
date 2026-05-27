@@ -1,86 +1,52 @@
 const User = require("../models/User");
-const Company = require("../models/Company");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 
 exports.login = async (req, res) => {
   try {
-    const { email, password } = req.body;
+    const email = req.body.email?.toLowerCase().trim();
+    const password = req.body.password;
 
     if (!email || !password) {
-      return res.status(400).json({
-        message: "Please enter email and password",
-      });
+      return res.status(400).json({ message: "Email and password required" });
     }
 
-    let user = await User.findOne({
-      email: email.toLowerCase().trim(),
-    });
-
-    let loginType = "user";
+    const user = await User.findOne({ email });
 
     if (!user) {
-      const company = await Company.findOne({
-        email: email.toLowerCase().trim(),
-      });
-
-      if (!company) {
-        return res.status(400).json({
-          message: "Invalid email or password",
-        });
-      }
-
-      user = company;
-      loginType = "company";
+      return res.status(401).json({ message: "User not found" });
     }
 
     let isMatch = false;
 
-    if (
-      user.password.startsWith("$2a$") ||
-      user.password.startsWith("$2b$")
-    ) {
+    if (user.password.startsWith("$2a$") || user.password.startsWith("$2b$")) {
       isMatch = await bcrypt.compare(password, user.password);
     } else {
       isMatch = password === user.password;
     }
 
     if (!isMatch) {
-      return res.status(400).json({
-        message: "Invalid email or password",
-      });
+      return res.status(401).json({ message: "Wrong password" });
     }
 
     const token = jwt.sign(
-      {
-        id: user._id,
-        role: user.role || "companyadmin",
-        companyId: user.companyId || user._id,
-        loginType,
-      },
-      process.env.JWT_SECRET,
-      {
-        expiresIn: "7d",
-      }
+      { id: user._id, role: user.role },
+      process.env.JWT_SECRET || "rkpayrollsecret",
+      { expiresIn: "7d" }
     );
 
-    res.status(200).json({
+    return res.status(200).json({
       message: "Login successful",
       token,
       user: {
         id: user._id,
-        name: user.name || user.companyName,
+        name: user.name,
         email: user.email,
-        role: user.role || "companyadmin",
-        companyId: user.companyId || user._id,
-        loginType,
+        role: user.role,
       },
     });
-  } catch (err) {
-    console.log("LOGIN ERROR:", err);
-
-    res.status(500).json({
-      message: "Server error",
-    });
+  } catch (error) {
+    console.log("LOGIN ERROR:", error);
+    return res.status(500).json({ message: "Server error" });
   }
 };

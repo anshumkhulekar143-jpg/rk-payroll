@@ -1,21 +1,21 @@
 import React, { useState } from "react";
 import Login from "./Login";
-import Layout from "./components/Layout";
+import Dashboard from "./Dashboard";
+import "./App.css";
 
 function App() {
-  const [token, setToken] = useState(
-    localStorage.getItem("token")
-  );
+  const [token, setToken] = useState(localStorage.getItem("token"));
 
-  return (
-    <>
-      {token ? (
-        <Layout setToken={setToken} />
-      ) : (
-        <Login setToken={setToken} />
-      )}
-    </>
-  );
+  const logout = () => {
+    localStorage.clear();
+    setToken(null);
+  };
+
+  if (!token) {
+    return <Login setToken={setToken} />;
+  }
+
+  return <Dashboard logout={logout} />;
 }
 
 export default App;

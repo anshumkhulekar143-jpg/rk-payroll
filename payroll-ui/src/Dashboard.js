@@ -1,58 +1,62 @@
 import React from "react";
-import EmployeeForm from "./EmployeeForm";
 
-function Dashboard() {
+function Dashboard({ logout }) {
   const user = JSON.parse(localStorage.getItem("user"));
 
-  const handleLogout = () => {
-    localStorage.removeItem("token");
-    localStorage.removeItem("user");
-    window.location.href = "/";
-  };
-
   return (
-    <div style={styles.container}>
-      <div style={styles.card}>
-        <h1>RK Payroll Dashboard</h1>
-        <p>Welcome, {user?.name || "User"} 👋</p>
-        <p>Email: {user?.email}</p>
+    <div className="dashboard-layout">
+      <aside className="sidebar">
+        <h2>RK Payroll</h2>
 
-        <button onClick={handleLogout} style={styles.button}>
-          Logout
-        </button>
+        <button>Dashboard</button>
+        <button>Companies</button>
+        <button>Employees</button>
+        <button>Attendance</button>
+        <button>Leave</button>
+        <button>Payroll</button>
+        <button>Reports</button>
+        <button>Settings</button>
+      </aside>
 
-        <EmployeeForm />
-      </div>
+      <main className="main-content">
+        <div className="topbar">
+          <div>
+            <h1>Dashboard</h1>
+            <p>Welcome, {user?.name || "Admin"}</p>
+          </div>
+
+          <button onClick={logout}>Logout</button>
+        </div>
+
+        <div className="cards">
+          <div className="dash-card">
+            <h3>Total Companies</h3>
+            <h2>0</h2>
+          </div>
+
+          <div className="dash-card">
+            <h3>Total Employees</h3>
+            <h2>0</h2>
+          </div>
+
+          <div className="dash-card">
+            <h3>Present Today</h3>
+            <h2>0</h2>
+          </div>
+
+          <div className="dash-card">
+            <h3>Payroll Generated</h3>
+            <h2>0</h2>
+          </div>
+        </div>
+
+        <div className="panel">
+          <h2>RK Payroll SaaS</h2>
+          <p>Your login, backend and MongoDB Atlas are working successfully.</p>
+        </div>
+      </main>
     </div>
   );
 }
-
-const styles = {
-  container: {
-    minHeight: "100vh",
-    display: "flex",
-    justifyContent: "center",
-    alignItems: "flex-start",
-    background: "#02133b",
-    padding: "40px 20px",
-  },
-  card: {
-    background: "#1f2d46",
-    color: "white",
-    padding: "40px",
-    borderRadius: "14px",
-    textAlign: "center",
-    width: "1100px",
-  },
-  button: {
-    marginTop: "20px",
-    padding: "12px 20px",
-    border: "none",
-    borderRadius: "8px",
-    background: "#38bdf8",
-    fontWeight: "bold",
-    cursor: "pointer",
-  },
-};
 
 export default Dashboard;
