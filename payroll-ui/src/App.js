@@ -1,10 +1,12 @@
 import React, { useState } from "react";
 import Login from "./Login";
-import Dashboard from "./Dashboard";
+import DashboardPage from "./pages/DashboardPage.js";
 import "./App.css";
 
 function App() {
-  const [token, setToken] = useState(localStorage.getItem("token"));
+  const [token, setToken] = useState(
+    localStorage.getItem("token")
+  );
 
   const logout = () => {
     localStorage.clear();
@@ -15,7 +17,7 @@ function App() {
     return <Login setToken={setToken} />;
   }
 
-  return <Dashboard logout={logout} />;
+  return <DashboardPage logout={logout} />;
 }
 
 export default App;

@@ -1,13 +1,15 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 
+const API_URL = "http://localhost:3003/api/leaves";
+
 function LeavePage() {
-  const [employees, setEmployees] = useState([]);
   const [leaves, setLeaves] = useState([]);
 
   const [form, setForm] = useState({
     employeeId: "",
-    leaveType: "casual",
+    name: "",
+    leaveType: "Casual Leave",
     fromDate: "",
     toDate: "",
     reason: "",
@@ -15,36 +17,21 @@ function LeavePage() {
 
   const token = localStorage.getItem("token");
 
-  const headers = {
-    Authorization: `Bearer ${token}`,
-  };
-
-  const fetchEmployees = async () => {
-    try {
-      const res = await axios.get("https://rk-payroll.onrender.com/api/employees", {
-        headers,
-      });
-
-      setEmployees(res.data);
-    } catch (err) {
-      console.log("FETCH EMPLOYEES ERROR:", err);
-    }
-  };
-
   const fetchLeaves = async () => {
     try {
-      const res = await axios.get("https://rk-payroll.onrender.com/api/leaves", {
-        headers,
+      const res = await axios.get(API_URL, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
       });
 
       setLeaves(res.data);
-    } catch (err) {
-      console.log("FETCH LEAVES ERROR:", err);
+    } catch (error) {
+      console.log("Fetch leaves error:", error);
     }
   };
 
   useEffect(() => {
-    fetchEmployees();
     fetchLeaves();
   }, []);
 
@@ -59,294 +46,207 @@ function LeavePage() {
     e.preventDefault();
 
     try {
-      await axios.post("https://rk-payroll.onrender.com/api/leaves", form, {
-        headers,
+      await axios.post(API_URL, form, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
       });
-
-      alert("Leave Applied Successfully");
 
       setForm({
         employeeId: "",
-        leaveType: "casual",
+        name: "",
+        leaveType: "Casual Leave",
         fromDate: "",
         toDate: "",
         reason: "",
       });
 
       fetchLeaves();
-    } catch (err) {
-      alert(err.response?.data?.message || "Error applying leave");
+
+      alert("Leave applied successfully");
+    } catch (error) {
+      alert(
+        error.response?.data?.message ||
+          "Error applying leave"
+      );
     }
   };
 
-  const updateStatus = async (id, status) => {
+  const updateLeaveStatus = async (id, status) => {
     try {
       await axios.put(
-        `https://rk-payroll.onrender.com/api/leaves/${id}/status`,
+        `${API_URL}/${id}/status`,
         { status },
-        { headers }
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
       );
 
       fetchLeaves();
-    } catch (err) {
-      alert("Error updating leave");
+    } catch (error) {
+      console.log(error);
     }
   };
 
   const deleteLeave = async (id) => {
-    if (!window.confirm("Delete this leave record?")) return;
-
     try {
-      await axios.delete(`https://rk-payroll.onrender.com/api/leaves/${id}`, {
-        headers,
+      await axios.delete(`${API_URL}/${id}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
       });
 
       fetchLeaves();
-    } catch (err) {
-      alert("Error deleting leave");
+    } catch (error) {
+      console.log(error);
     }
   };
 
   return (
-    <div style={container}>
-      <div style={formBox}>
-        <h2>Leave Management</h2>
-
-        <form onSubmit={applyLeave}>
-          <div style={grid}>
-            <select
-              name="employeeId"
-              value={form.employeeId}
-              onChange={handleChange}
-              style={input}
-              required
-            >
-              <option value="">Select Employee</option>
-              {employees.map((emp) => (
-                <option key={emp._id} value={emp._id}>
-                  {emp.employeeId} - {emp.name}
-                </option>
-              ))}
-            </select>
-
-            <select
-              name="leaveType"
-              value={form.leaveType}
-              onChange={handleChange}
-              style={input}
-            >
-              <option value="casual">Casual Leave</option>
-              <option value="sick">Sick Leave</option>
-              <option value="paid">Paid Leave</option>
-              <option value="unpaid">Unpaid Leave</option>
-            </select>
-
-            <input
-              type="date"
-              name="fromDate"
-              value={form.fromDate}
-              onChange={handleChange}
-              style={input}
-              required
-            />
-
-            <input
-              type="date"
-              name="toDate"
-              value={form.toDate}
-              onChange={handleChange}
-              style={input}
-              required
-            />
-
-            <input
-              name="reason"
-              placeholder="Reason"
-              value={form.reason}
-              onChange={handleChange}
-              style={input}
-            />
-          </div>
-
-          <button type="submit" style={button}>
-            Apply Leave
-          </button>
-        </form>
+    <div className="page-card">
+      <div className="page-header">
+        <div>
+          <h2>Leave Management</h2>
+          <p>Manage employee leave requests</p>
+        </div>
       </div>
 
-      <div style={tableBox}>
-        <h2>Leave Records</h2>
+      <form className="employee-form" onSubmit={applyLeave}>
+        <input
+          type="text"
+          name="employeeId"
+          placeholder="Employee ID"
+          value={form.employeeId}
+          onChange={handleChange}
+          required
+        />
 
-        <table style={table}>
-          <thead>
+        <input
+          type="text"
+          name="name"
+          placeholder="Employee Name"
+          value={form.name}
+          onChange={handleChange}
+          required
+        />
+
+        <select
+          name="leaveType"
+          value={form.leaveType}
+          onChange={handleChange}
+        >
+          <option>Casual Leave</option>
+          <option>Sick Leave</option>
+          <option>Paid Leave</option>
+          <option>Unpaid Leave</option>
+        </select>
+
+        <input
+          type="date"
+          name="fromDate"
+          value={form.fromDate}
+          onChange={handleChange}
+          required
+        />
+
+        <input
+          type="date"
+          name="toDate"
+          value={form.toDate}
+          onChange={handleChange}
+          required
+        />
+
+        <input
+          type="text"
+          name="reason"
+          placeholder="Reason"
+          value={form.reason}
+          onChange={handleChange}
+        />
+
+        <div className="form-buttons">
+          <button type="submit">
+            Apply Leave
+          </button>
+        </div>
+      </form>
+
+      <table className="data-table">
+        <thead>
+          <tr>
+            <th>Employee ID</th>
+            <th>Name</th>
+            <th>Leave Type</th>
+            <th>From</th>
+            <th>To</th>
+            <th>Reason</th>
+            <th>Status</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          {leaves.length === 0 ? (
             <tr>
-              <th style={th}>Employee ID</th>
-              <th style={th}>Name</th>
-              <th style={th}>Type</th>
-              <th style={th}>From</th>
-              <th style={th}>To</th>
-              <th style={th}>Reason</th>
-              <th style={th}>Status</th>
-              <th style={th}>Approve</th>
-              <th style={th}>Reject</th>
-              <th style={th}>Delete</th>
+              <td colSpan="8">
+                No leave requests found
+              </td>
             </tr>
-          </thead>
-
-          <tbody>
-            {leaves.map((leave) => (
+          ) : (
+            leaves.map((leave) => (
               <tr key={leave._id}>
-                <td style={td}>{leave.employeeId?.employeeId || "-"}</td>
-                <td style={td}>{leave.employeeId?.name || "-"}</td>
-                <td style={td}>{leave.leaveType}</td>
-                <td style={td}>{leave.fromDate}</td>
-                <td style={td}>{leave.toDate}</td>
-                <td style={td}>{leave.reason || "-"}</td>
-                <td style={td}>
-                  <span style={statusStyle(leave.status)}>{leave.status}</span>
-                </td>
+                <td>{leave.employeeId}</td>
+                <td>{leave.name}</td>
+                <td>{leave.leaveType}</td>
+                <td>{leave.fromDate}</td>
+                <td>{leave.toDate}</td>
+                <td>{leave.reason}</td>
+                <td>{leave.status}</td>
 
-                <td style={td}>
+                <td>
                   <button
-                    onClick={() => updateStatus(leave._id, "approved")}
-                    style={approveBtn}
+                    className="edit-btn"
+                    onClick={() =>
+                      updateLeaveStatus(
+                        leave._id,
+                        "Approved"
+                      )
+                    }
                   >
                     Approve
                   </button>
-                </td>
 
-                <td style={td}>
                   <button
-                    onClick={() => updateStatus(leave._id, "rejected")}
-                    style={rejectBtn}
+                    className="delete-btn"
+                    onClick={() =>
+                      updateLeaveStatus(
+                        leave._id,
+                        "Rejected"
+                      )
+                    }
                   >
                     Reject
                   </button>
-                </td>
 
-                <td style={td}>
-                  <button onClick={() => deleteLeave(leave._id)} style={deleteBtn}>
+                  <button
+                    className="delete-btn"
+                    onClick={() =>
+                      deleteLeave(leave._id)
+                    }
+                  >
                     Delete
                   </button>
                 </td>
               </tr>
-            ))}
-
-            {leaves.length === 0 && (
-              <tr>
-                <td colSpan="10" style={emptyTd}>
-                  No leave records found
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
-      </div>
+            ))
+          )}
+        </tbody>
+      </table>
     </div>
   );
 }
-
-const container = {
-  padding: "20px",
-};
-
-const formBox = {
-  background: "#fff",
-  padding: "20px",
-  borderRadius: "12px",
-  marginBottom: "30px",
-};
-
-const tableBox = {
-  background: "#fff",
-  padding: "20px",
-  borderRadius: "12px",
-  overflowX: "auto",
-};
-
-const grid = {
-  display: "grid",
-  gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
-  gap: "15px",
-};
-
-const input = {
-  padding: "12px",
-  borderRadius: "8px",
-  border: "1px solid #ccc",
-};
-
-const button = {
-  marginTop: "20px",
-  width: "100%",
-  padding: "14px",
-  border: "none",
-  borderRadius: "8px",
-  background: "#2563eb",
-  color: "#fff",
-  fontSize: "18px",
-  cursor: "pointer",
-};
-
-const table = {
-  width: "100%",
-  borderCollapse: "collapse",
-};
-
-const th = {
-  padding: "12px",
-  background: "#0f1f4b",
-  color: "white",
-  textAlign: "left",
-};
-
-const td = {
-  padding: "12px",
-  borderBottom: "1px solid #ddd",
-};
-
-const emptyTd = {
-  textAlign: "center",
-  padding: "20px",
-};
-
-const statusStyle = (status) => ({
-  padding: "6px 10px",
-  borderRadius: "20px",
-  color: "white",
-  background:
-    status === "approved"
-      ? "#16a34a"
-      : status === "rejected"
-      ? "red"
-      : "#f59e0b",
-});
-
-const approveBtn = {
-  background: "#16a34a",
-  color: "white",
-  border: "none",
-  padding: "8px 12px",
-  borderRadius: "6px",
-  cursor: "pointer",
-};
-
-const rejectBtn = {
-  background: "#f97316",
-  color: "white",
-  border: "none",
-  padding: "8px 12px",
-  borderRadius: "6px",
-  cursor: "pointer",
-};
-
-const deleteBtn = {
-  background: "red",
-  color: "white",
-  border: "none",
-  padding: "8px 12px",
-  borderRadius: "6px",
-  cursor: "pointer",
-};
 
 export default LeavePage;

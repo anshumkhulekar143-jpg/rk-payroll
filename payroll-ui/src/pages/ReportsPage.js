@@ -2,6 +2,11 @@ import React, { useEffect, useState } from "react";
 import axios from "axios";
 import * as XLSX from "xlsx";
 
+const EMPLOYEE_API = "http://localhost:3003/api/employees";
+const ATTENDANCE_API = "http://localhost:3003/api/attendance";
+const LEAVE_API = "http://localhost:3003/api/leaves";
+const PAYROLL_API = "http://localhost:3003/api/payrolls";
+
 function ReportsPage() {
   const [employees, setEmployees] = useState([]);
   const [attendance, setAttendance] = useState([]);
@@ -10,232 +15,133 @@ function ReportsPage() {
 
   const token = localStorage.getItem("token");
 
-  const headers = {
-    Authorization: `Bearer ${token}`,
+  const config = {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
   };
 
-  const fetchReportsData = async () => {
+  const fetchReports = async () => {
     try {
-      const empRes = await axios.get("https://rk-payroll.onrender.com/api/employees", {
-        headers,
-      });
-
-      const attRes = await axios.get("https://rk-payroll.onrender.com/api/attendance", {
-        headers,
-      });
-
-      const leaveRes = await axios.get("https://rk-payroll.onrender.com/api/leaves", {
-        headers,
-      });
-
-      const payrollRes = await axios.get("https://rk-payroll.onrender.com/api/payroll", {
-        headers,
-      });
+      const empRes = await axios.get(EMPLOYEE_API, config);
+      const attRes = await axios.get(ATTENDANCE_API, config);
+      const leaveRes = await axios.get(LEAVE_API, config);
+      const payrollRes = await axios.get(PAYROLL_API, config);
 
       setEmployees(empRes.data);
       setAttendance(attRes.data);
       setLeaves(leaveRes.data);
       setPayrolls(payrollRes.data);
-    } catch (err) {
-      console.log("REPORTS DATA ERROR:", err);
+    } catch (error) {
+      console.log("Reports error:", error);
     }
   };
 
   useEffect(() => {
-    fetchReportsData();
+    fetchReports();
   }, []);
 
-  const exportToExcel = (data, fileName, sheetName) => {
-    const worksheet = XLSX.utils.json_to_sheet(data);
-    const workbook = XLSX.utils.book_new();
+  const totalPayroll = payrolls.reduce(
+    (sum, item) => sum + Number(item.netSalary || 0),
+    0
+  );
 
-    XLSX.utils.book_append_sheet(workbook, worksheet, sheetName);
-    XLSX.writeFile(workbook, `${fileName}.xlsx`);
-  };
+  const approvedLeaves = leaves.filter(
+    (leave) => leave.status === "Approved"
+  ).length;
 
-  const exportEmployeeReport = () => {
-    const data = employees.map((emp) => ({
-      EmployeeID: emp.employeeId,
-      Name: emp.name,
-      Mobile: emp.mobileNo,
-      Email: emp.email,
-      Aadhar: emp.aadharNo,
-      UAN: emp.uanNo,
-      PFNo: emp.pfNo,
-      ESINo: emp.esiNo,
-      Bank: emp.bankName,
-      AccountNo: emp.accountNo,
-      IFSC: emp.ifscCode,
-      GrossSalary: emp.grossSalary,
-      NetSalary: emp.netSalary,
-    }));
+  const presentToday = attendance.filter(
+    (att) => att.status === "Present"
+  ).length;
 
-    exportToExcel(data, "employee-report", "Employees");
-  };
-
-  const exportAttendanceReport = () => {
-    const data = attendance.map((att) => ({
-      Date: att.date,
-      EmployeeID: att.employeeId?.employeeId,
-      Name: att.employeeId?.name,
-      Status: att.status,
-      OvertimeHours: att.overtimeHours,
-      LateMark: att.lateMark ? "Yes" : "No",
-    }));
-
-    exportToExcel(data, "attendance-report", "Attendance");
-  };
-
-  const exportLeaveReport = () => {
-    const data = leaves.map((leave) => ({
-      EmployeeID: leave.employeeId?.employeeId,
-      Name: leave.employeeId?.name,
-      LeaveType: leave.leaveType,
-      FromDate: leave.fromDate,
-      ToDate: leave.toDate,
-      Reason: leave.reason,
-      Status: leave.status,
-    }));
-
-    exportToExcel(data, "leave-report", "Leaves");
-  };
-
-  const exportPayrollReport = () => {
+  const exportReportsExcel = () => {
     const data = payrolls.map((pay) => ({
+      EmployeeID: pay.employeeId,
+      Name: pay.name,
       Month: pay.month,
-      EmployeeID: pay.employeeId?.employeeId,
-      Name: pay.employeeId?.name,
-      TotalDays: pay.totalDays,
-      PresentDays: pay.presentDays,
-      AbsentDays: pay.absentDays,
-      PayableDays: pay.payableDays,
-      GrossSalary: pay.grossSalary,
-      EarnedSalary: pay.earnedSalary,
+      BasicSalary: pay.basicSalary,
       PF: pay.pf,
       ESI: pay.esi,
-      PT: pay.pt,
-      TDS: pay.tds,
       NetSalary: pay.netSalary,
     }));
 
-    exportToExcel(data, "payroll-report", "Payroll");
+    const worksheet = XLSX.utils.json_to_sheet(data);
+    const workbook = XLSX.utils.book_new();
+
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Payroll Report");
+    XLSX.writeFile(workbook, "complete-payroll-report.xlsx");
   };
 
-  const totalEmployees = employees.length;
-
-  const totalNetPayroll = payrolls.reduce(
-    (sum, pay) => sum + Number(pay.netSalary || 0),
-    0
-  );
-
-  const totalPF = payrolls.reduce(
-    (sum, pay) => sum + Number(pay.pf || 0),
-    0
-  );
-
-  const totalESI = payrolls.reduce(
-    (sum, pay) => sum + Number(pay.esi || 0),
-    0
-  );
-
-  const totalTDS = payrolls.reduce(
-    (sum, pay) => sum + Number(pay.tds || 0),
-    0
-  );
-
   return (
-    <div style={container}>
-      <h1>Reports</h1>
+    <div className="page-card">
+      <div className="page-header">
+        <div>
+          <h2>Reports</h2>
+          <p>Complete payroll, attendance and leave reports</p>
+        </div>
 
-      <div style={cards}>
-        <div style={card}>
+        <button onClick={exportReportsExcel}>
+          Export Payroll Report
+        </button>
+      </div>
+
+      <div className="cards-container">
+        <div className="card">
           <h3>Total Employees</h3>
-          <h2>{totalEmployees}</h2>
+          <h1>{employees.length}</h1>
         </div>
 
-        <div style={card}>
-          <h3>Total Net Payroll</h3>
-          <h2>₹{totalNetPayroll}</h2>
+        <div className="card">
+          <h3>Present Records</h3>
+          <h1>{presentToday}</h1>
         </div>
 
-        <div style={card}>
-          <h3>Total PF</h3>
-          <h2>₹{totalPF}</h2>
+        <div className="card">
+          <h3>Approved Leaves</h3>
+          <h1>{approvedLeaves}</h1>
         </div>
 
-        <div style={card}>
-          <h3>Total ESI</h3>
-          <h2>₹{totalESI}</h2>
-        </div>
-
-        <div style={card}>
-          <h3>Total TDS</h3>
-          <h2>₹{totalTDS}</h2>
+        <div className="card">
+          <h3>Total Payroll</h3>
+          <h1>₹{totalPayroll}</h1>
         </div>
       </div>
 
-      <div style={box}>
-        <h2>Export Reports</h2>
+      <table className="data-table">
+        <thead>
+          <tr>
+            <th>Employee ID</th>
+            <th>Name</th>
+            <th>Month</th>
+            <th>Basic Salary</th>
+            <th>PF</th>
+            <th>ESI</th>
+            <th>Net Salary</th>
+          </tr>
+        </thead>
 
-        <div style={buttons}>
-          <button onClick={exportEmployeeReport} style={btn}>
-            Export Employee Report
-          </button>
-
-          <button onClick={exportAttendanceReport} style={btn}>
-            Export Attendance Report
-          </button>
-
-          <button onClick={exportLeaveReport} style={btn}>
-            Export Leave Report
-          </button>
-
-          <button onClick={exportPayrollReport} style={btn}>
-            Export Payroll Report
-          </button>
-        </div>
-      </div>
+        <tbody>
+          {payrolls.length === 0 ? (
+            <tr>
+              <td colSpan="7">No payroll reports found</td>
+            </tr>
+          ) : (
+            payrolls.map((pay) => (
+              <tr key={pay._id}>
+                <td>{pay.employeeId}</td>
+                <td>{pay.name}</td>
+                <td>{pay.month}</td>
+                <td>₹{pay.basicSalary}</td>
+                <td>₹{pay.pf}</td>
+                <td>₹{pay.esi}</td>
+                <td>₹{pay.netSalary}</td>
+              </tr>
+            ))
+          )}
+        </tbody>
+      </table>
     </div>
   );
 }
-
-const container = {
-  padding: "20px",
-};
-
-const cards = {
-  display: "grid",
-  gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
-  gap: "20px",
-  marginBottom: "30px",
-};
-
-const card = {
-  background: "#0f1f4b",
-  color: "white",
-  padding: "25px",
-  borderRadius: "15px",
-};
-
-const box = {
-  background: "white",
-  padding: "25px",
-  borderRadius: "15px",
-};
-
-const buttons = {
-  display: "flex",
-  gap: "15px",
-  flexWrap: "wrap",
-};
-
-const btn = {
-  padding: "14px 18px",
-  border: "none",
-  borderRadius: "8px",
-  background: "#2563eb",
-  color: "white",
-  cursor: "pointer",
-};
 
 export default ReportsPage;

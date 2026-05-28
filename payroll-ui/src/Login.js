@@ -11,12 +11,12 @@ function Login({ setToken }) {
 
     try {
       const res = await axios.post(
-        "https://rk-payroll.onrender.com/api/auth/login",
-        {
-          email,
-          password,
-        }
-      );
+  "http://localhost:3003/api/auth/login",
+  {
+    email,
+    password,
+  }
+   );
 
       console.log("LOGIN SUCCESS:", res.data);
 
@@ -103,7 +103,7 @@ function Login({ setToken }) {
         />
 
         <button
-          type="submit"
+          type="submit" 
           style={{
             padding: "15px",
             borderRadius: "10px",

@@ -1,26 +1,37 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
+import * as XLSX from "xlsx";
+
+const API_URL = "http://localhost:3003/api/payrolls";
 
 function PayrollPage() {
-  const [month, setMonth] = useState("");
   const [payrolls, setPayrolls] = useState([]);
+
+  const [form, setForm] = useState({
+    employeeId: "",
+    name: "",
+    month: "",
+    basicSalary: "",
+    bonus: "",
+    deduction: "",
+  });
 
   const token = localStorage.getItem("token");
 
-  const headers = {
-    Authorization: `Bearer ${token}`,
+  const config = {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
   };
 
   const fetchPayrolls = async () => {
     try {
-      const res = await axios.get("https://rk-payroll.onrender.com/api/payroll", {
-        headers,
-        params: month ? { month } : {},
-      });
-
+      const res = await axios.get(API_URL, config);
       setPayrolls(res.data);
-    } catch (err) {
-      console.log("FETCH PAYROLL ERROR:", err);
+    } catch (error) {
+      console.log("Fetch payroll error:", error);
     }
   };
 
@@ -28,210 +39,239 @@ function PayrollPage() {
     fetchPayrolls();
   }, []);
 
-  const generatePayroll = async () => {
-    if (!month) {
-      alert("Please select month");
-      return;
-    }
+  const handleChange = (e) => {
+    setForm({
+      ...form,
+      [e.target.name]: e.target.value,
+    });
+  };
+
+  const generatePayroll = async (e) => {
+    e.preventDefault();
 
     try {
-      await axios.post(
-        "https://rk-payroll.onrender.com/api/payroll/generate",
-        { month },
-        { headers }
-      );
+      await axios.post(API_URL, form, config);
 
-      alert("Payroll Generated Successfully");
+      setForm({
+        employeeId: "",
+        name: "",
+        month: "",
+        basicSalary: "",
+        bonus: "",
+        deduction: "",
+      });
+
       fetchPayrolls();
-    } catch (err) {
-      alert(err.response?.data?.message || "Error generating payroll");
+      alert("Payroll generated successfully");
+    } catch (error) {
+      alert(
+        error.response?.data?.message ||
+          "Error generating payroll"
+      );
     }
   };
 
   const deletePayroll = async (id) => {
-    if (!window.confirm("Delete this payroll record?")) return;
+    if (!window.confirm("Delete this payroll?")) return;
 
     try {
-      await axios.delete(`https://rk-payroll.onrender.com/api/payroll/${id}`, {
-        headers,
-      });
-
+      await axios.delete(`${API_URL}/${id}`, config);
       fetchPayrolls();
-    } catch (err) {
-      alert("Error deleting payroll");
+    } catch (error) {
+      console.log(error);
     }
   };
 
+  const downloadSalarySlip = (pay) => {
+    const doc = new jsPDF();
+
+    doc.setFontSize(18);
+    doc.text("RK Payroll - Salary Slip", 65, 15);
+
+    doc.setFontSize(11);
+    doc.text(`Employee ID: ${pay.employeeId}`, 14, 30);
+    doc.text(`Employee Name: ${pay.name}`, 14, 38);
+    doc.text(`Month: ${pay.month}`, 14, 46);
+
+    autoTable(doc, {
+      startY: 60,
+      head: [["Earnings", "Amount"]],
+      body: [
+        ["Basic Salary", `Rs. ${pay.basicSalary}`],
+        ["Bonus", `Rs. ${pay.bonus || 0}`],
+      ],
+    });
+
+    autoTable(doc, {
+      startY: doc.lastAutoTable.finalY + 10,
+      head: [["Deductions", "Amount"]],
+      body: [
+        ["PF", `Rs. ${pay.pf}`],
+        ["ESI", `Rs. ${pay.esi}`],
+        ["Other Deduction", `Rs. ${pay.deduction || 0}`],
+      ],
+    });
+
+    autoTable(doc, {
+      startY: doc.lastAutoTable.finalY + 10,
+      body: [["Net Salary", `Rs. ${pay.netSalary}`]],
+    });
+
+    doc.save(`${pay.name}-salary-slip.pdf`);
+  };
+
+  const exportPayrollExcel = () => {
+    if (payrolls.length === 0) {
+      alert("No payroll records to export");
+      return;
+    }
+
+    const data = payrolls.map((pay) => ({
+      EmployeeID: pay.employeeId,
+      Name: pay.name,
+      Month: pay.month,
+      BasicSalary: pay.basicSalary,
+      Bonus: pay.bonus || 0,
+      Deduction: pay.deduction || 0,
+      PF: pay.pf,
+      ESI: pay.esi,
+      NetSalary: pay.netSalary,
+    }));
+
+    const worksheet = XLSX.utils.json_to_sheet(data);
+    const workbook = XLSX.utils.book_new();
+
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Payroll");
+    XLSX.writeFile(workbook, "payroll-report.xlsx");
+  };
+
   return (
-    <div style={container}>
-      <div style={formBox}>
-        <h2>Monthly Payroll Processing</h2>
-
-        <div style={grid}>
-          <input
-            type="month"
-            value={month}
-            onChange={(e) => setMonth(e.target.value)}
-            style={input}
-          />
-
-          <button onClick={generatePayroll} style={button}>
-            Generate Payroll
-          </button>
-
-          <button onClick={fetchPayrolls} style={filterBtn}>
-            Filter
-          </button>
+    <div className="page-card">
+      <div className="page-header">
+        <div>
+          <h2>Payroll Management</h2>
+          <p>Generate salary, download PDF and export Excel</p>
         </div>
+
+        <button onClick={exportPayrollExcel}>
+          Export Excel
+        </button>
       </div>
 
-      <div style={tableBox}>
-        <h2>Payroll Records</h2>
+      <form className="employee-form" onSubmit={generatePayroll}>
+        <input
+          name="employeeId"
+          placeholder="Employee ID"
+          value={form.employeeId}
+          onChange={handleChange}
+          required
+        />
 
-        <table style={table}>
-          <thead>
+        <input
+          name="name"
+          placeholder="Employee Name"
+          value={form.name}
+          onChange={handleChange}
+          required
+        />
+
+        <input
+          type="month"
+          name="month"
+          value={form.month}
+          onChange={handleChange}
+          required
+        />
+
+        <input
+          type="number"
+          name="basicSalary"
+          placeholder="Basic Salary"
+          value={form.basicSalary}
+          onChange={handleChange}
+          required
+        />
+
+        <input
+          type="number"
+          name="bonus"
+          placeholder="Bonus"
+          value={form.bonus}
+          onChange={handleChange}
+        />
+
+        <input
+          type="number"
+          name="deduction"
+          placeholder="Deduction"
+          value={form.deduction}
+          onChange={handleChange}
+        />
+
+        <div className="form-buttons">
+          <button type="submit">Generate Payroll</button>
+        </div>
+      </form>
+
+      <table className="data-table">
+        <thead>
+          <tr>
+            <th>Employee ID</th>
+            <th>Name</th>
+            <th>Month</th>
+            <th>Basic</th>
+            <th>Bonus</th>
+            <th>Deduction</th>
+            <th>PF</th>
+            <th>ESI</th>
+            <th>Net Salary</th>
+            <th>PDF</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          {payrolls.length === 0 ? (
             <tr>
-              <th style={th}>Month</th>
-              <th style={th}>Emp ID</th>
-              <th style={th}>Name</th>
-              <th style={th}>Total Days</th>
-              <th style={th}>Present</th>
-              <th style={th}>Absent</th>
-              <th style={th}>Half Days</th>
-              <th style={th}>Paid Leaves</th>
-              <th style={th}>Payable</th>
-              <th style={th}>Gross</th>
-              <th style={th}>Earned</th>
-              <th style={th}>PF</th>
-              <th style={th}>ESI</th>
-              <th style={th}>PT</th>
-              <th style={th}>TDS</th>
-              <th style={th}>Net</th>
-              <th style={th}>Delete</th>
+              <td colSpan="11">No payroll records found</td>
             </tr>
-          </thead>
-
-          <tbody>
-            {payrolls.map((pay) => (
+          ) : (
+            payrolls.map((pay) => (
               <tr key={pay._id}>
-                <td style={td}>{pay.month}</td>
-                <td style={td}>{pay.employeeId?.employeeId || "-"}</td>
-                <td style={td}>{pay.employeeId?.name || "-"}</td>
-                <td style={td}>{pay.totalDays}</td>
-                <td style={td}>{pay.presentDays}</td>
-                <td style={td}>{pay.absentDays}</td>
-                <td style={td}>{pay.halfDays}</td>
-                <td style={td}>{pay.paidLeaves}</td>
-                <td style={td}>{pay.payableDays}</td>
-                <td style={td}>₹{pay.grossSalary || 0}</td>
-                <td style={td}>₹{pay.earnedSalary || 0}</td>
-                <td style={td}>₹{pay.pf || 0}</td>
-                <td style={td}>₹{pay.esi || 0}</td>
-                <td style={td}>₹{pay.pt || 0}</td>
-                <td style={td}>₹{pay.tds || 0}</td>
-                <td style={td}>₹{pay.netSalary || 0}</td>
-                <td style={td}>
+                <td>{pay.employeeId}</td>
+                <td>{pay.name}</td>
+                <td>{pay.month}</td>
+                <td>₹{pay.basicSalary}</td>
+                <td>₹{pay.bonus || 0}</td>
+                <td>₹{pay.deduction || 0}</td>
+                <td>₹{pay.pf}</td>
+                <td>₹{pay.esi}</td>
+                <td>₹{pay.netSalary}</td>
+
+                <td>
                   <button
+                    className="edit-btn"
+                    onClick={() => downloadSalarySlip(pay)}
+                  >
+                    PDF
+                  </button>
+                </td>
+
+                <td>
+                  <button
+                    className="delete-btn"
                     onClick={() => deletePayroll(pay._id)}
-                    style={deleteBtn}
                   >
                     Delete
                   </button>
                 </td>
               </tr>
-            ))}
-
-            {payrolls.length === 0 && (
-              <tr>
-                <td colSpan="17" style={emptyTd}>
-                  No payroll records found
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
-      </div>
+            ))
+          )}
+        </tbody>
+      </table>
     </div>
   );
 }
-
-const container = {
-  padding: "20px",
-};
-
-const formBox = {
-  background: "#fff",
-  padding: "20px",
-  borderRadius: "12px",
-  marginBottom: "30px",
-};
-
-const tableBox = {
-  background: "#fff",
-  padding: "20px",
-  borderRadius: "12px",
-  overflowX: "auto",
-};
-
-const grid = {
-  display: "grid",
-  gridTemplateColumns: "220px 220px 140px",
-  gap: "15px",
-  alignItems: "center",
-};
-
-const input = {
-  padding: "12px",
-  borderRadius: "8px",
-  border: "1px solid #ccc",
-};
-
-const button = {
-  padding: "13px",
-  border: "none",
-  borderRadius: "8px",
-  background: "#2563eb",
-  color: "#fff",
-  fontSize: "16px",
-  cursor: "pointer",
-};
-
-const filterBtn = {
-  ...button,
-  background: "#16a34a",
-};
-
-const table = {
-  width: "100%",
-  borderCollapse: "collapse",
-};
-
-const th = {
-  padding: "12px",
-  background: "#0f1f4b",
-  color: "white",
-  textAlign: "left",
-  whiteSpace: "nowrap",
-};
-
-const td = {
-  padding: "12px",
-  borderBottom: "1px solid #ddd",
-  whiteSpace: "nowrap",
-};
-
-const emptyTd = {
-  textAlign: "center",
-  padding: "20px",
-};
-
-const deleteBtn = {
-  background: "red",
-  color: "white",
-  border: "none",
-  padding: "8px 12px",
-  borderRadius: "6px",
-  cursor: "pointer",
-};
 
 export default PayrollPage;
